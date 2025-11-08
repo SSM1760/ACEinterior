@@ -128,10 +128,6 @@ html, body{
     @media (max-width: 600px){ .grid{ grid-template-columns: 1fr; } }
 
     .item-card{ background:#091120; border:1px solid #1b2637; border-radius: 14px; overflow: hidden; display:flex; flex-direction:column; }
-    .item-thumb{ aspect-ratio: 16/10; background:#0a1323; display:grid; place-items:center; border-bottom:1px solid #1b2637; }
-.item-thumb.zoomable { cursor: zoom-in; }
-.item-thumb.zoomable img { cursor: zoom-in; }
-    .item-thumb img{ width:100%; height:100%; object-fit: cover; display:block; }
     .placeholder{ font-size:12px; color: #546582; }
     .item-body{ padding: 10px 12px; display:flex; flex-direction:column; gap: 6px; }
     .item-title{ font-weight: 700; }
@@ -422,40 +418,6 @@ html, body{
 
 #app, #auth { overscroll-behavior-y: none; }
 
-/* ===== Disable Pull-To-Refresh on mobile (iOS/Android) ===== */
-(function setupDisablePTR(){
-  // 모바일에서만 동작
-  function isMobile(){ return window.matchMedia('(max-width: 720px)').matches; }
-
-  const root = document.scrollingElement || document.documentElement;
-  let startY = 0;
-  let maybePull = false;
-
-  // 터치 시작점 기록
-  document.addEventListener('touchstart', (e) => {
-    if (!isMobile() || e.touches.length !== 1) return;
-    startY = e.touches[0].clientY;
-    // 문서 스크롤이 꼭대기일 때만 "아래로 끌어내리는 제스처" 감시
-    maybePull = (root.scrollTop <= 0);
-  }, { passive: true });
-
-  // 아래로 끌어내리면 기본 동작(새로고침 바운스)을 막음
-  document.addEventListener('touchmove', (e) => {
-    if (!isMobile() || !maybePull) return;
-
-    const dy = e.touches[0].clientY - startY;
-    if (dy > 0) {
-      // 입력 필드/스크롤 가능한 내부 영역은 예외 처리
-      const t = e.target;
-      const isInsideScrollable =
-        t.closest('.modal .bd, .grid, .main, textarea, input, select');
-      if (!isInsideScrollable) {
-        e.preventDefault();            // ★ iOS PTR 차단 핵심
-      }
-    }
-  }, { passive: false });              // ★ 반드시 non-passive
-})();
-
 /* ===== 모바일 가시성/안정성 패치 ===== */
 
 /* iOS 자동 폰트확대/줌 방지 */
@@ -480,15 +442,16 @@ img {
 }
 .item-thumb{
   position: relative;
-  aspect-ratio: 16 / 10;        /* 고정 비율로 높이 확보 → 로딩 중에도 레이아웃 안 튐 */
+  aspect-ratio: 1 / 1;        /* 고정 비율로 높이 확보 → 로딩 중에도 레이아웃 안 튐 */
   background:#0a1323;
   border-bottom:1px solid #1b2637;
   overflow: hidden;             /* 이미지 넘침 차단 */
 }
 .item-thumb img{
-  width: 100%;
-  height: 100%;
-  object-fit: cover;            /* 비율 유지 + 채우기 */
+  width:100%;
+  height:100%;
+  object-fit: contain;          /* ★ 전부 보이게 */
+  display:block;
 }
 
 /* 제목/이름이 길 때 줄바꿈 강제 (기기별 한글/영문 혼합 케이스 대응) */
@@ -1460,16 +1423,6 @@ $$('#modalImage [data-close]').forEach(b => on(b,'click',()=> closeModal($modalI
 on($('.backdrop', $modalSitePick), 'click', ()=> closeModal($modalSitePick));
 $$('#modalSitePick [data-close]').forEach(b => on(b,'click',()=> closeModal($modalSitePick)));
 
-// 현장 상단 버튼 바인딩 (한 번만)
-if ($btnSiteAdd && !$btnSiteAdd._bound) {
-  on($btnSiteAdd, 'click', openSiteModal);   // ‘추가’ → 현장 추가 모달
-  $btnSiteAdd._bound = true;
-}
-if ($btnManageSites && !$btnManageSites._bound) {
-  on($btnManageSites, 'click', openSitePicker); // ‘현장관리’ → 현장 선택 모달
-  $btnManageSites._bound = true;
-}
-
 // 큰 이미지 클릭하면 닫기 (zoom-out 커서 동작과 일치)
 on($imgViewer, 'click', () => closeModal($modalImage));
 
@@ -2083,6 +2036,40 @@ window.addEventListener('resize', () => {
   const cat = (window.currentCategory || getActiveCategory() || '타일');
   renderCategoriesMobile(cat);
 });
+
+/* ===== Disable Pull-To-Refresh on mobile (iOS/Android) ===== */
+(function setupDisablePTR(){
+  // 모바일에서만 동작
+  function isMobile(){ return window.matchMedia('(max-width: 720px)').matches; }
+
+  const root = document.scrollingElement || document.documentElement;
+  let startY = 0;
+  let maybePull = false;
+
+  // 터치 시작점 기록
+  document.addEventListener('touchstart', (e) => {
+    if (!isMobile() || e.touches.length !== 1) return;
+    startY = e.touches[0].clientY;
+    // 문서 스크롤이 꼭대기일 때만 "아래로 끌어내리는 제스처" 감시
+    maybePull = (root.scrollTop <= 0);
+  }, { passive: true });
+
+  // 아래로 끌어내리면 기본 동작(새로고침 바운스)을 막음
+  document.addEventListener('touchmove', (e) => {
+    if (!isMobile() || !maybePull) return;
+
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 0) {
+      // 입력 필드/스크롤 가능한 내부 영역은 예외 처리
+      const t = e.target;
+      const isInsideScrollable =
+        t.closest('.modal .bd, .grid, .main, textarea, input, select');
+      if (!isInsideScrollable) {
+        e.preventDefault();            // ★ iOS PTR 차단 핵심
+      }
+    }
+  }, { passive: false });              // ★ 반드시 non-passive
+})();
 
   </script>
 </body>
