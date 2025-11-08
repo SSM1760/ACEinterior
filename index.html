@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -839,29 +840,6 @@ function noteCachePut(siteId, cat, text) {
     const on = (el,ev,fn)=>el&&el.addEventListener(ev,fn);
     const today = () => new Date().toISOString().slice(0,10);
 
-// === 모달 히스토리 관리 ===
-const __modalStack = [];
-
-function isOpen(el){ return el && el.style.display === 'block'; }
-
-function openModalWithHistory(tag, el){
-  openModal(el);
-  __modalStack.push(tag);
-  if ('pushState' in history) {
-    history.pushState({ app:true, modal: tag }, document.title, location.href);
-  }
-}
-
-function closeModalAndPop(el){
-  if (!isOpen(el)) return;
-  closeModal(el);
-  if (__modalStack.length) __modalStack.pop();
-  // 모달 전용 state 한 칸을 소비해서 원래 화면으로 복귀
-  if (history.state && history.state.modal) {
-    setTimeout(()=> history.back(), 0);
-  }
-}
-
 function isMobile(){
   return window.matchMedia('(max-width: 720px)').matches;
 }
@@ -1440,65 +1418,14 @@ if ($btnSiteSave && !$btnSiteSave._bound){
 on($('.backdrop', $modalSite),'click', ()=> closeModal($modalSite));
 $$('#modalSite [data-close]').forEach(b => on(b,'click',()=> closeModal($modalSite)));
 
-on($('.backdrop', $modalImage), 'click', ()=> closeModalAndPop($modalImage));
-$$('#modalImage [data-close]').forEach(b => on(b,'click',()=> closeModalAndPop($modalImage)));
+on($('.backdrop', $modalImage), 'click', ()=> closeModal($modalImage));
+$$('#modalImage [data-close]').forEach(b => on(b,'click',()=> closeModal($modalImage)));
 
 on($('.backdrop', $modalSitePick), 'click', ()=> closeModal($modalSitePick));
 $$('#modalSitePick [data-close]').forEach(b => on(b,'click',()=> closeModal($modalSitePick)));
 
-/* ====== Back button (popstate) — close modals first ====== */
-(function initModalBackHandler(){
-  // 유틸이 아직 없다면 최소 스택 보장
-  window.modalStack = Array.isArray(window.modalStack) ? window.modalStack : [];
-
-  // 기본 히스토리 상태 주입 (새로고침 직후 popstate 기반 잡음 방지)
-  try {
-    if (!history.state || !history.state.__base) {
-      history.replaceState({ __base: true }, document.title);
-    }
-  } catch (_) {}
-
-  window.addEventListener('popstate', (ev) => {
-    // 스택 최상단 모달이 있으면 그걸 먼저 닫고, 페이지 네비게이션은 막음
-    const top = window.modalStack[window.modalStack.length - 1];
-    if (!top) {
-      // 모달이 열려있지 않으면 기본 뒤로가기로 동작(페이지 이탈)
-      return;
-    }
-
-    // 기본 뒤로가기는 먹지 않도록 가로채서 모달만 닫음
-    ev.preventDefault?.();
-
-    // 히스토리는 이미 1스텝 뒤로 간 상태이므로, 여기서는 "화면만" 닫고 스택만 pop
-    if (top === 'image') {
-      if ($modalImage) $modalImage.style.display = 'none';
-    } else if (top === 'sitePick') {
-      if ($modalSitePick) $modalSitePick.style.display = 'none';
-    } else if (top === 'material') {
-      if ($modalMaterial) $modalMaterial.style.display = 'none';
-    } else if (top === 'progress') {
-      if ($modalProgress) $modalProgress.style.display = 'none';
-    } else {
-      // 혹시 타입이 등록 안 됐으면 화면에 떠있는 .modal 하나 찾아서 닫기
-      const anyOpen = document.querySelector('.modal[style*="display: block"]');
-      if (anyOpen) anyOpen.style.display = 'none';
-    }
-
-    // 스택 동기화
-    window.modalStack.pop();
-
-    // 🔁 유저가 뒤로가기를 연달아 눌러도 "페이지 이탈"로 튀지 않게
-    // 베이스 상태를 즉시 복구해 두면 UX가 더 안정적임
-    try {
-      if (!history.state || !history.state.__base) {
-        history.replaceState({ __base: true }, document.title);
-      }
-    } catch (_) {}
-  }, { passive: true });
-})();
-
 // 큰 이미지 클릭하면 닫기 (zoom-out 커서 동작과 일치)
-on($imgViewer, 'click', () => closeModalAndPop($modalImage));
+on($imgViewer, 'click', () => closeModal($modalImage));
 
 // Esc 키로도 닫기
 document.addEventListener('keydown', (e) => {
@@ -1516,7 +1443,7 @@ function openImageViewer(src, title = '', subtitle = '') {
   $imgViewer.alt = (title || '미리보기');
   $imgTitle.textContent = title || '이미지 보기';
   $imgCaption.textContent = subtitle ? String(subtitle) : '';
-  openModalWithHistory('image', $modalImage);
+  $modalImage.style.display = 'block';
 }
 
 $$('.tab').forEach(t => on(t, 'click', () => {
