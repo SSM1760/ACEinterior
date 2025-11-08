@@ -455,6 +455,62 @@ html, body{
     }
   }, { passive: false });              // ★ 반드시 non-passive
 })();
+
+/* ===== 모바일 가시성/안정성 패치 ===== */
+
+/* iOS 자동 폰트확대/줌 방지 */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* 이미지가 카드 밖으로 튀거나 줄을 밀지 않게 고정 */
+img { 
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* 카드 내부 레이아웃 안정화 */
+.item-card{
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;             /* 겹침 방지 */
+  contain: content;             /* 페인트 영역 고정(모바일 레이아웃 튐 감소) */
+}
+.item-thumb{
+  position: relative;
+  aspect-ratio: 16 / 10;        /* 고정 비율로 높이 확보 → 로딩 중에도 레이아웃 안 튐 */
+  background:#0a1323;
+  border-bottom:1px solid #1b2637;
+  overflow: hidden;             /* 이미지 넘침 차단 */
+}
+.item-thumb img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;            /* 비율 유지 + 채우기 */
+}
+
+/* 제목/이름이 길 때 줄바꿈 강제 (기기별 한글/영문 혼합 케이스 대응) */
+.item-title,
+.item-name {
+  line-height: 1.35;
+  word-break: break-word;       /* 한글/영문 공통 자동 줄바꿈 */
+  overflow-wrap: anywhere;      /* 긴 토큰(연속숫자/URL 등)도 강제 줄바꿈 */
+}
+
+/* 날짜 라인도 겹침 방지 */
+.mini { 
+  line-height: 1.3;
+  white-space: normal;
+}
+
+/* 모바일 카드 간격과 패딩 미세 조정 (가시성) */
+@media (max-width: 600px){
+  .grid{ gap: 10px; }
+  .item-body{ padding: 10px; }
+  .section-title h2{ font-size: 16px; }
+}
   </style>
 </head>
 <body>
