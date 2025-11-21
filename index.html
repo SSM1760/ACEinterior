@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -498,7 +499,6 @@ img {
             <input id="loginPw" type="password" autocomplete="current-password" placeholder="••••••••" />
             <div class="row" style="margin-top:12px">
               <button id="btnLogin" class="btn">로그인</button>
-              <button id="btnAdminLogin" class="btn secondary" title="관리자만">관리자 로그인</button>
               <button id="btnOpenSignup" class="btn ghost">가입하기</button>
             </div>
             <div id="authMsg" class="helper"></div>
@@ -1303,10 +1303,59 @@ async function apiSilent(type, payload = {}) {
     const $adminCodeInput=$("#adminCodeInput"), $btnAdminConfirm=$("#btnAdminConfirm"), $adminMsg=$("#adminMsg");
     const $suId=$("#suId"), $suPw=$("#suPw"), $suPw2=$("#suPw2"), $suCode=$("#suCode"), $btnSignup=$("#btnSignup"), $signupMsg=$("#signupMsg");
 
+const $authTitle = document.querySelector('#auth .title');
+
     function openModal(m){ m.style.display='block'; }
     function closeModal(m){ m.style.display='none'; }
     $$('[data-close]').forEach(b=> on(b,'click',()=> closeModal(b.closest('.modal'))));
     [ $modalAdmin, $modalSignup ].forEach(m=> on(m.querySelector('.backdrop'),'click',()=> closeModal(m)));
+
+// ===== 관리자 비밀 진입: 제목 3번 탭 =====
+let adminTapCount = 0;
+let adminTapTimer = null;
+
+function triggerAdminLoginModal(){
+  if (!$modalAdmin) return;
+  $adminCodeInput.value = '';
+  $adminMsg.textContent = '';
+  openModal($modalAdmin);
+  $adminCodeInput.focus();
+}
+
+function bindAdminSecretTap(el){
+  if (!el) return;
+
+  const handleTap = () => {
+    adminTapCount++;
+    // 첫 탭 시 타이머 시작 (1.2초 안에 3번)
+    if (adminTapCount === 1){
+      adminTapTimer = setTimeout(() => {
+        adminTapCount = 0;
+        adminTapTimer = null;
+      }, 1200);
+    }
+    // 3번째 탭이면 관리자 모달 오픈
+    if (adminTapCount >= 3){
+      if (adminTapTimer) {
+        clearTimeout(adminTapTimer);
+        adminTapTimer = null;
+      }
+      adminTapCount = 0;
+      triggerAdminLoginModal();
+    }
+  };
+
+  // 마우스 클릭
+  el.addEventListener('click', handleTap);
+
+  // 터치 (모바일 탭)
+  el.addEventListener('touchstart', () => {
+    handleTap();
+  }, { passive: true });
+}
+
+// 로그인 화면의 "공사진행 관리" 텍스트에 비밀 탭 바인딩
+bindAdminSecretTap($authTitle);
 
     on($btnLogin,'click', async ()=>{
       $authMsg.textContent='';
@@ -1318,7 +1367,6 @@ async function apiSilent(type, payload = {}) {
       enterApp();
     });
 
-    on($btnAdminLogin,'click', ()=>{ $adminCodeInput.value=''; $adminMsg.textContent=''; openModal($modalAdmin); $adminCodeInput.focus(); });
     on($btnAdminConfirm,'click', async ()=>{
       const code=$adminCodeInput.value.trim();
       if(!code){ $adminMsg.textContent='관리자 번호를 입력하세요.'; return; }
