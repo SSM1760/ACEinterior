@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1705,7 +1706,7 @@ const payload = {
 
 // Base64(data URL)를 셀 한도(5만자) 이하로 강제해서 업로드
 async function uploadImage(file){
-  const LIMIT = 45000; // 안전 마진 포함
+  const LIMIT = 48000; // 안전 마진 포함
   const dataUrl = await toBase64UnderLimit(file, LIMIT);
 
   console.log('[uploadImage] len=', dataUrl.length, 'mime=', dataUrl.slice(5, dataUrl.indexOf(';')));
@@ -1758,10 +1759,10 @@ async function toCompressedDataURL(file, { maxDim = 1600, quality = 0.82 } = {})
 }
 
 // 목표 글자수 이하가 될 때까지 품질/크기를 낮춰 dataURL 생성
-async function toBase64UnderLimit(file, limit=45000){
+async function toBase64UnderLimit(file, limit=48000){
   // 초기값(대부분의 현장 사진이 이 근방에서 45k 안으로 들어옴)
-  let maxDim = 960;
-  let quality = 0.78;
+  let maxDim = 1280;
+  let quality = 0.84;
 
   for (let i=0; i<8; i++){
     const dataUrl = await toCompressedDataURL(file, { maxDim, quality });
