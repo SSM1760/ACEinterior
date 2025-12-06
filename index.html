@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1766,8 +1767,8 @@ async function toCompressedDataURL(file, { maxDim = 1600, quality = 0.82 } = {})
 // 목표 글자수 이하가 될 때까지 품질/크기를 낮춰 dataURL 생성
 async function toBase64UnderLimit(file, limit=48000){
   // 초기값(대부분의 현장 사진이 이 근방에서 45k 안으로 들어옴)
-  let maxDim = 1280;
-  let quality = 0.84;
+  let maxDim = 1024;
+  let quality = 0.78;
 
   for (let i=0; i<8; i++){
     const dataUrl = await toCompressedDataURL(file, { maxDim, quality });
