@@ -1768,7 +1768,7 @@ async function toCompressedDataURL(file, { maxDim = 1600, quality = 0.82 } = {})
 async function toBase64UnderLimit(file, limit=48000){
   // 초기값(대부분의 현장 사진이 이 근방에서 45k 안으로 들어옴)
   let maxDim = 1200;
-  let quality = 0.84;
+  let quality = 0.80;
 
   for (let i=0; i<8; i++){
     const dataUrl = await toCompressedDataURL(file, { maxDim, quality });
