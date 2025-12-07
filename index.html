@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1765,21 +1766,43 @@ async function toCompressedDataURL(file, { maxDim = 1600, quality = 0.82 } = {})
 }
 
 // 목표 글자수 이하가 될 때까지 품질/크기를 낮춰 dataURL 생성
-async function toBase64UnderLimit(file, limit=48000){
-  // 초기값(대부분의 현장 사진이 이 근방에서 45k 안으로 들어옴)
-  let maxDim = 1100;
-  let quality = 0.80;
+async function toBase64UnderLimit(file, limit = 48000) {
+  // 1) 처음에는 꽤 좋은 품질 + 적당한 해상도에서 시작
+  let maxDim = 1280;   // 시작 해상도
+  let quality = 0.84;  // 시작 품질
 
-  for (let i=0; i<8; i++){
+  const MIN_QUALITY = 0.50;  // 이 아래로는 더 안 내림
+  const MIN_DIM     = 400;   // 이 아래로는 더 안 줄임
+  const MAX_TRIES   = 20;    // ★ 시도 횟수 늘리기 (기존 8 → 20)
+
+  for (let i = 0; i < MAX_TRIES; i++) {
     const dataUrl = await toCompressedDataURL(file, { maxDim, quality });
-    if (dataUrl.length <= limit) return dataUrl;
 
-    // 먼저 품질을 내리고, 충분히 낮아졌으면 크기를 줄인다
-    if (quality > 0.58) quality -= 0.08;
-    else maxDim = Math.round(maxDim * 0.8);
+    // ✅ limit 안에 들어오면 바로 반환 → 그 순간의 해상도/품질이 "그 사진에서 가능한 최대치"
+    if (dataUrl.length <= limit) {
+      console.log('[compress OK]', i, 'maxDim=', maxDim, 'quality=', quality, 'len=', dataUrl.length);
+      return dataUrl;
+    }
+
+    console.log('[compress TOO BIG]', i, 'maxDim=', maxDim, 'quality=', quality, 'len=', dataUrl.length);
+
+    // 2) 먼저 품질을 조금씩 내리기 (눈에 크게 티 안 나게)
+    if (quality > MIN_QUALITY) {
+      quality = Math.max(MIN_QUALITY, quality - 0.06); // 0.84 → 0.78 → 0.72 ...
+      continue;
+    }
+
+    // 3) 품질을 더 못 내리면 해상도를 줄이기
+    if (maxDim > MIN_DIM) {
+      maxDim = Math.max(MIN_DIM, Math.round(maxDim * 0.8)); // 1280 → 1024 → 819 ...
+      continue;
+    }
+
+    // 4) 여기까지 왔다는 건 quality, maxDim 둘 다 한계까지 줄였다는 뜻 → 루프 종료
+    break;
   }
 
-  // 그래도 안되면 원본 base64로 시도(희박하게 5만자 이하일 수도 있음)
+  // 그래도 안 되면 원본 base64로 한 번 더 시도
   const raw = await fileToDataURL(file);
   if (raw.length <= limit) return raw;
 
