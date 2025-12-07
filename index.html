@@ -1,7 +1,5 @@
 
 
-
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1768,8 +1766,8 @@ async function toCompressedDataURL(file, { maxDim = 1600, quality = 0.82 } = {})
 // 목표 글자수 이하가 될 때까지 품질/크기를 낮춰 dataURL 생성
 async function toBase64UnderLimit(file, limit = 48000) {
   // 1) 처음에는 꽤 좋은 품질 + 적당한 해상도에서 시작
-  let maxDim = 2000;   // 시작 해상도
-  let quality = 1.00;  // 시작 품질
+  let maxDim = 1600;   // 시작 해상도
+  let quality = 0.90;  // 시작 품질
 
   const MIN_QUALITY = 0.50;  // 이 아래로는 더 안 내림
   const MIN_DIM     = 400;   // 이 아래로는 더 안 줄임
@@ -2153,4 +2151,5 @@ window.addEventListener('resize', () => {
   </script>
 </body>
 </html>
+
 
