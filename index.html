@@ -1771,9 +1771,9 @@ async function toBase64UnderLimit(file, limit = 48000) {
   let maxDim   = 1500;  // ← 2000 대신 1500 정도로 타협
   let quality  = 0.90;  // ← 1.0 대신 0.90
 
-  const MIN_QUALITY = 0.72;  // 이 아래로는 더 안 내림 (너무 깨지지 않게)
-  const MIN_DIM     = 600;   // 이 아래로는 더 안 줄임 (너무 작아지지 않게)
-  const MAX_TRIES   = 24;    // 시도 횟수 (너무 많지도 적지도 않게)
+  const MIN_QUALITY = 0.50;  // 이 아래로는 더 안 내림 (너무 깨지지 않게)
+  const MIN_DIM     = 400;   // 이 아래로는 더 안 줄임 (너무 작아지지 않게)
+  const MAX_TRIES   = 25;    // 시도 횟수 (너무 많지도 적지도 않게)
 
   for (let i = 0; i < MAX_TRIES; i++) {
     const dataUrl = await toCompressedDataURL(file, { maxDim, quality });
@@ -2156,4 +2156,5 @@ window.addEventListener('resize', () => {
   </script>
 </body>
 </html>
+
 
